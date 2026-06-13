@@ -8,7 +8,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type ApConfig struct {
+type AppConfig struct {
 	AppEnv                    string
 	Port                      string
 	DatabaseURL               string
@@ -16,13 +16,13 @@ type ApConfig struct {
 	AccessTokenExpiresMinutes int
 }
 
-func LoadConfig() ApConfig {
+func LoadConfig() AppConfig {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	return ApConfig{
+	return AppConfig{
 		AppEnv:                    getEnv("APP_ENV", "development"),
 		Port:                      getEnv("PORT", "8080"),
 		DatabaseURL:               getRequiredEnv("DATABASE_URL"),

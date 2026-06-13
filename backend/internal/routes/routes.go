@@ -10,10 +10,16 @@ import (
 	"gorm.io/gorm"
 )
 
-func RegisterRoutes(router *gin.Engine, db *gorm.DB, cfg config.ApConfig) {
+func RegisterRoutes(
+	router *gin.Engine,
+	db *gorm.DB,
+	cfg config.AppConfig,
+	tokenBlacklist services.TokenBlacklist,
+) {
 	api := router.Group("/api/v1")
 
 	healthHandler := handlers.NewHealthHandler(db)
+
 	api.GET("/health", healthHandler.HealthCheck)
 	api.GET("/health/db", healthHandler.DBHealthCheck)
 
@@ -22,14 +28,29 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB, cfg config.ApConfig) {
 		userRepository,
 		cfg.JWTSecret,
 		cfg.AccessTokenExpiresMinutes,
+		tokenBlacklist,
 	)
-
 	authHandler := handlers.NewAuthHandler(authService)
 
 	authRoutes := api.Group("/auth")
 	{
-		authRoutes.POST("/signup", authHandler.Register)
+		authRoutes.POST("/register", authHandler.Register)
 		authRoutes.POST("/login", authHandler.Login)
-		authRoutes.GET("/me", middleware.AuthMiddleware(cfg.JWTSecret), authHandler.Me)
+
+		protectedAuthRoutes := authRoutes.Group("")
+		protectedAuthRoutes.Use(middleware.AuthMiddleware(cfg.JWTSecret, tokenBlacklist))
+		{
+			protectedAuthRoutes.GET("/me", authHandler.Me)
+			protectedAuthRoutes.POST("/logout", authHandler.Logout)
+		}
+	}
+
+	adminRoutes := api.Group("/admin")
+	adminRoutes.Use(
+		middleware.AuthMiddleware(cfg.JWTSecret, tokenBlacklist),
+		middleware.AdminOnly(),
+	)
+	{
+		adminRoutes.GET("/ping", handlers.AdminPing)
 	}
 }

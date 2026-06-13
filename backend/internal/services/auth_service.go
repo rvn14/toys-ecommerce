@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/rvn14/toys-ecommerce/backend/internal/dto"
 	"github.com/rvn14/toys-ecommerce/backend/internal/models"
@@ -22,19 +23,22 @@ type AuthService interface {
 	Register(request dto.RegisterRequest) (*dto.AuthResponse, error)
 	Login(request dto.LoginRequest) (*dto.AuthResponse, error)
 	GetCurrentUser(userID uint) (*dto.UserResponse, error)
+	Logout(tokenID string, expiresAt time.Time) error
 }
 
 type authService struct {
 	userRepository            repositories.UserRepository
 	jwtSecret                 string
 	accessTokenExpiresMinutes int
+	tokenBlacklist            TokenBlacklist
 }
 
-func NewAuthService(userRepository repositories.UserRepository, jwtSecret string, accessTokenExpiresMinutes int) AuthService {
+func NewAuthService(userRepository repositories.UserRepository, jwtSecret string, accessTokenExpiresMinutes int, tokenBlacklist TokenBlacklist) AuthService {
 	return &authService{
 		userRepository:            userRepository,
 		jwtSecret:                 jwtSecret,
 		accessTokenExpiresMinutes: accessTokenExpiresMinutes,
+		tokenBlacklist:            tokenBlacklist,
 	}
 }
 
@@ -97,6 +101,14 @@ func (s *authService) GetCurrentUser(userID uint) (*dto.UserResponse, error) {
 	}
 	response := mapUserToResponse(user)
 	return &response, nil
+}
+
+func (s *authService) Logout(tokenID string, expiresAt time.Time) error {
+	if tokenID == "" || expiresAt.IsZero() {
+		return ErrUnauthorized
+	}
+	s.tokenBlacklist.Revoke(tokenID, expiresAt)
+	return nil
 }
 
 func (s *authService) createAuthResponse(user *models.User) (*dto.AuthResponse, error) {
