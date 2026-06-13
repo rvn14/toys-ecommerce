@@ -8,17 +8,20 @@ import (
 )
 
 func RunMigrations(db *gorm.DB) error {
-
 	log.Println("Running database migrations...")
 
 	err := db.AutoMigrate(
 		&models.User{},
+		&models.Category{},
+		&models.Brand{},
+		&models.Product{},
+		&models.ProductImage{},
 	)
 	if err != nil {
 		return err
 	}
 
-	log.Println("Database migrations completed successfully.")
+	log.Println("Database migrations completed successfully")
 
 	return nil
 }
