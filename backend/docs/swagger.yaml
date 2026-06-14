@@ -1,0 +1,18 @@
+basePath: /api/v1
+host: localhost:8080
+info:
+  contact: {}
+  description: |-
+    REST API for a toys and collectibles e-commerce store.
+    Built with Go, Gin, GORM, PostgreSQL, JWT authentication, and role-based authorization.
+  title: Toys Store API
+  version: "1.0"
+paths: {}
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
