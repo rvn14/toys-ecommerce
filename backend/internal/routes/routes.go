@@ -19,6 +19,9 @@ func RegisterRoutes(
 	api := router.Group("/api/v1")
 
 	healthHandler := handlers.NewHealthHandler(db)
+	orderRepository := repositories.NewOrderRepository(db)
+	orderService := services.NewOrderService(orderRepository)
+	orderHandler := handlers.NewOrderHandler(orderService)
 
 	api.GET("/health", healthHandler.HealthCheck)
 	api.GET("/health/db", healthHandler.DBHealthCheck)
@@ -73,6 +76,9 @@ func RegisterRoutes(
 		adminRoutes.POST("/products", catalogHandler.CreateProduct)
 		adminRoutes.PUT("/products/:id", catalogHandler.UpdateProduct)
 		adminRoutes.DELETE("/products/:id", catalogHandler.DeleteProduct)
+		adminRoutes.GET("/orders", orderHandler.AdminGetOrders)
+		adminRoutes.GET("/orders/:id", orderHandler.AdminGetOrderByID)
+		adminRoutes.PATCH("/orders/:id/status", orderHandler.AdminUpdateOrderStatus)
 	}
 
 	cartRepository := repositories.NewCartRepository(db)
@@ -87,5 +93,13 @@ func RegisterRoutes(
 		cartRoutes.PUT("/items/:id", cartHandler.UpdateItemQuantity)
 		cartRoutes.DELETE("/items/:id", cartHandler.RemoveItem)
 		cartRoutes.DELETE("", cartHandler.ClearCart)
+	}
+
+	orderRoutes := api.Group("/orders")
+	orderRoutes.Use(middleware.AuthMiddleware(cfg.JWTSecret, tokenBlacklist))
+	{
+		orderRoutes.POST("", orderHandler.CreateOrder)
+		orderRoutes.GET("", orderHandler.GetMyOrders)
+		orderRoutes.GET("/:id", orderHandler.GetMyOrderByID)
 	}
 }
