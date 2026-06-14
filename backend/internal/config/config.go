@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"log"
 	"os"
 	"strconv"
@@ -17,9 +18,8 @@ type AppConfig struct {
 }
 
 func LoadConfig() AppConfig {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	if err := loadDotEnv(); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
 	}
 
 	return AppConfig{
@@ -29,6 +29,14 @@ func LoadConfig() AppConfig {
 		JWTSecret:                 getRequiredEnv("JWT_SECRET"),
 		AccessTokenExpiresMinutes: getEnvAsInt("ACCESS_TOKEN_EXPIRES_MINUTES", 60),
 	}
+}
+
+func loadDotEnv() error {
+	err := godotenv.Load()
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return err
 }
 
 func getEnv(key string, defaultValue string) string {

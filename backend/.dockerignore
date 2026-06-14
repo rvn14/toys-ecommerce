@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+
+tmp/
+bin/
+coverage.out
+
+.git
+.gitignore
+
+Dockerfile
+docker-compose.yml
+
+*.log
