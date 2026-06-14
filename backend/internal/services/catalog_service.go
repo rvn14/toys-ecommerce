@@ -14,6 +14,7 @@ import (
 var (
 	ErrInvalidProductStatus = errors.New("invalid product status")
 	ErrInvalidSortOption    = errors.New("invalid sort option")
+	ErrInvalidDiscountPrice = errors.New("discount price must be lower than price")
 )
 
 type CatalogService interface {
@@ -151,6 +152,10 @@ func (s *catalogService) CreateProduct(request dto.CreateProductRequest) (*dto.P
 		return nil, ErrInvalidProductStatus
 	}
 
+	if err := validateProductPricing(request.PriceCents, request.DiscountPriceCents); err != nil {
+		return nil, err
+	}
+
 	specifications, err := buildSpecificationsJSON(request.Specifications)
 	if err != nil {
 		return nil, err
@@ -251,6 +256,10 @@ func (s *catalogService) UpdateProduct(id uint, request dto.UpdateProductRequest
 		return nil, ErrInvalidProductStatus
 	}
 
+	if err := validateProductPricing(request.PriceCents, request.DiscountPriceCents); err != nil {
+		return nil, err
+	}
+
 	specifications, err := buildSpecificationsJSON(request.Specifications)
 	if err != nil {
 		return nil, err
@@ -312,6 +321,22 @@ func isValidProductStatus(status models.ProductStatus) bool {
 	default:
 		return false
 	}
+}
+
+func validateProductPricing(priceCents int64, discountPriceCents *int64) error {
+	if discountPriceCents == nil {
+		return nil
+	}
+
+	if *discountPriceCents <= 0 {
+		return ErrInvalidDiscountPrice
+	}
+
+	if *discountPriceCents >= priceCents {
+		return ErrInvalidDiscountPrice
+	}
+
+	return nil
 }
 
 func buildSpecificationsJSON(specifications map[string]interface{}) (datatypes.JSON, error) {

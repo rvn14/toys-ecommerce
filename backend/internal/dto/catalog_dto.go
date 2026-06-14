@@ -23,19 +23,18 @@ type UpdateBrandRequest struct {
 }
 
 type ProductImageInput struct {
-	URL         string `json:"url" binding:"required"`
+	URL         string `json:"url" binding:"required,url"`
 	StoragePath string `json:"storagePath"`
-	AltText     string `json:"altText"`
-	SortOrder   int    `json:"sortOrder"`
+	AltText     string `json:"altText" binding:"max=255"`
+	SortOrder   int    `json:"sortOrder" binding:"gte=0"`
 }
-
 type CreateProductRequest struct {
 	Name               string                 `json:"name" binding:"required,min=2,max=150"`
 	SKU                string                 `json:"sku" binding:"required,min=2,max=80"`
-	Description        string                 `json:"description"`
+	Description        string                 `json:"description" binding:"max=5000"`
 	PriceCents         int64                  `json:"priceCents" binding:"required,min=1"`
 	DiscountPriceCents *int64                 `json:"discountPriceCents"`
-	StockQuantity      int                    `json:"stockQuantity" binding:"gte=0"`
+	StockQuantity      int                    `json:"stockQuantity" binding:"gte=0,lte=100000"`
 	Status             string                 `json:"status"`
 	CategoryID         uint                   `json:"categoryId" binding:"required"`
 	BrandID            uint                   `json:"brandId" binding:"required"`

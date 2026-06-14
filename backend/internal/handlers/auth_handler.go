@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -22,115 +21,71 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	var request dto.RegisterRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "Invalid request body",
-			"errors":  err.Error(),
-		})
+		validationError(c, err)
 		return
 	}
 
 	response, err := h.authService.Register(request)
 	if err != nil {
 		if errors.Is(err, services.ErrEmailAlreadyExists) {
-			c.JSON(http.StatusConflict, gin.H{
-				"success": false,
-				"message": "Email already exists",
-			})
+			conflict(c, "Email already exists")
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "Failed to register user",
-		})
+		internalError(c, "Failed to register user")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"success": true,
-		"message": "User registered successfully",
-		"data":    response,
-	})
+	created(c, "User registered successfully", response)
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
 	var request dto.LoginRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "Invalid request body",
-			"errors":  err.Error(),
-		})
+		validationError(c, err)
 		return
 	}
 
 	response, err := h.authService.Login(request)
 	if err != nil {
 		if errors.Is(err, services.ErrInvalidCredentials) {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Invalid email or password",
-			})
+			unauthorized(c, "Invalid email or password")
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "Failed to login",
-		})
+		internalError(c, "Failed to login")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Login successful",
-		"data":    response,
-	})
+	ok(c, "Login successful", response)
 }
 
 func (h *AuthHandler) Me(c *gin.Context) {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Unauthorized",
-		})
+		unauthorized(c, "Unauthorized")
 		return
 	}
 
-	userID, ok := userIDValue.(uint)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Invalid user context",
-		})
+	userID, userIDOK := userIDValue.(uint)
+	if !userIDOK {
+		unauthorized(c, "Invalid user context")
 		return
 	}
 
 	response, err := h.authService.GetCurrentUser(userID)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
-				"message": "User not found",
-			})
+			notFound(c, "User not found")
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "Failed to get current user",
-		})
+		internalError(c, "Failed to get current user")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Current user loaded successfully",
-		"data":    response,
-	})
+	ok(c, "Current user loaded successfully", response)
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
@@ -138,10 +93,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	expiresAtValue, expiresAtExists := c.Get("tokenExpiresAt")
 
 	if !tokenIDExists || !expiresAtExists {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Invalid token context",
-		})
+		unauthorized(c, "Invalid token context")
 		return
 	}
 
@@ -149,23 +101,14 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	expiresAt, expiresAtOk := expiresAtValue.(time.Time)
 
 	if !tokenIDOk || !expiresAtOk {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Invalid token context",
-		})
+		unauthorized(c, "Invalid token context")
 		return
 	}
 
 	if err := h.authService.Logout(tokenID, expiresAt); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Failed to logout",
-		})
+		unauthorized(c, "Failed to logout")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Logged out successfully",
-	})
+	ok(c, "Logged out successfully", nil)
 }

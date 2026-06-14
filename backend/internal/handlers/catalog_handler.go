@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -23,7 +22,7 @@ func (h *CatalogHandler) CreateCategory(c *gin.Context) {
 	var request dto.CreateCategoryRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		badRequest(c, "Invalid request body", err.Error())
+		validationError(c, err)
 		return
 	}
 
@@ -55,7 +54,7 @@ func (h *CatalogHandler) UpdateCategory(c *gin.Context) {
 	var request dto.UpdateCategoryRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		badRequest(c, "Invalid request body", err.Error())
+		validationError(c, err)
 		return
 	}
 
@@ -91,7 +90,7 @@ func (h *CatalogHandler) CreateBrand(c *gin.Context) {
 	var request dto.CreateBrandRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		badRequest(c, "Invalid request body", err.Error())
+		validationError(c, err)
 		return
 	}
 
@@ -123,7 +122,7 @@ func (h *CatalogHandler) UpdateBrand(c *gin.Context) {
 	var request dto.UpdateBrandRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		badRequest(c, "Invalid request body", err.Error())
+		validationError(c, err)
 		return
 	}
 
@@ -159,7 +158,7 @@ func (h *CatalogHandler) CreateProduct(c *gin.Context) {
 	var request dto.CreateProductRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		badRequest(c, "Invalid request body", err.Error())
+		validationError(c, err)
 		return
 	}
 
@@ -167,6 +166,11 @@ func (h *CatalogHandler) CreateProduct(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, services.ErrInvalidProductStatus) {
 			badRequest(c, "Invalid product status", nil)
+			return
+		}
+
+		if errors.Is(err, services.ErrInvalidDiscountPrice) {
+			badRequest(c, "Discount price must be lower than price", nil)
 			return
 		}
 
@@ -181,7 +185,7 @@ func (h *CatalogHandler) GetProducts(c *gin.Context) {
 	var query dto.ProductQueryParams
 
 	if err := c.ShouldBindQuery(&query); err != nil {
-		badRequest(c, "Invalid query parameters", err.Error())
+		validationError(c, err)
 		return
 	}
 
@@ -252,6 +256,11 @@ func (h *CatalogHandler) UpdateProduct(c *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, services.ErrInvalidDiscountPrice) {
+			badRequest(c, "Discount price must be lower than price", nil)
+			return
+		}
+
 		internalError(c, "Failed to update product")
 		return
 	}
@@ -281,42 +290,4 @@ func getIDParam(c *gin.Context) (uint, bool) {
 	}
 
 	return uint(id), true
-}
-
-func ok(c *gin.Context, message string, data interface{}) {
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": message,
-		"data":    data,
-	})
-}
-
-func created(c *gin.Context, message string, data interface{}) {
-	c.JSON(http.StatusCreated, gin.H{
-		"success": true,
-		"message": message,
-		"data":    data,
-	})
-}
-
-func badRequest(c *gin.Context, message string, errors interface{}) {
-	c.JSON(http.StatusBadRequest, gin.H{
-		"success": false,
-		"message": message,
-		"errors":  errors,
-	})
-}
-
-func notFound(c *gin.Context, message string) {
-	c.JSON(http.StatusNotFound, gin.H{
-		"success": false,
-		"message": message,
-	})
-}
-
-func internalError(c *gin.Context, message string) {
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"success": false,
-		"message": message,
-	})
 }
