@@ -16,6 +16,8 @@ func RunMigrations(db *gorm.DB) error {
 		&models.Brand{},
 		&models.Product{},
 		&models.ProductImage{},
+		&models.Cart{},
+		&models.CartItem{},
 	)
 	if err != nil {
 		return err

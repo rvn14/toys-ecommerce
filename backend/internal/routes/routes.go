@@ -74,4 +74,18 @@ func RegisterRoutes(
 		adminRoutes.PUT("/products/:id", catalogHandler.UpdateProduct)
 		adminRoutes.DELETE("/products/:id", catalogHandler.DeleteProduct)
 	}
+
+	cartRepository := repositories.NewCartRepository(db)
+	cartService := services.NewCartService(cartRepository)
+	cartHandler := handlers.NewCartHandler(cartService)
+
+	cartRoutes := api.Group("/cart")
+	cartRoutes.Use(middleware.AuthMiddleware(cfg.JWTSecret, tokenBlacklist))
+	{
+		cartRoutes.GET("", cartHandler.GetCart)
+		cartRoutes.POST("/items", cartHandler.AddItem)
+		cartRoutes.PUT("/items/:id", cartHandler.UpdateItemQuantity)
+		cartRoutes.DELETE("/items/:id", cartHandler.RemoveItem)
+		cartRoutes.DELETE("", cartHandler.ClearCart)
+	}
 }
