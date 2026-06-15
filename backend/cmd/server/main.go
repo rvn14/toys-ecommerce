@@ -51,6 +51,10 @@ func main() {
 	tokenBlacklist.StartCleanup(ctx, 10*time.Minute)
 
 	router := gin.Default()
+	if err := router.SetTrustedProxies(nil); err != nil {
+		log.Fatal("Failed to set trusted proxies:", err)
+	}
+
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{cfg.FrontendOrigin},
 		AllowMethods: []string{

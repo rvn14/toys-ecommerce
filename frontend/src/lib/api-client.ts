@@ -1,10 +1,13 @@
 import { cache } from "react";
 import type { ApiResponse, Brand, Category, Product, ProductListData } from "@/lib/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL =
+  process.env.INTERNAL_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
 
 if (!API_BASE_URL) {
-  throw new Error("NEXT_PUBLIC_API_BASE_URL is not set");
+  throw new Error(
+    "INTERNAL_API_BASE_URL or NEXT_PUBLIC_API_BASE_URL must be set"
+  );
 }
 
 export async function getProducts(params?: {
