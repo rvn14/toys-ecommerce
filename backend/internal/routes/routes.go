@@ -74,6 +74,7 @@ func RegisterRoutes(
 		adminRoutes.DELETE("/brands/:id", catalogHandler.DeleteBrand)
 
 		adminRoutes.POST("/products", catalogHandler.CreateProduct)
+		adminRoutes.GET("/products", catalogHandler.GetAdminProducts)
 		adminRoutes.PUT("/products/:id", catalogHandler.UpdateProduct)
 		adminRoutes.DELETE("/products/:id", catalogHandler.DeleteProduct)
 		adminRoutes.GET("/orders", orderHandler.AdminGetOrders)

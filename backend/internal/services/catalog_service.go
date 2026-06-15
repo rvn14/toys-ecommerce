@@ -30,6 +30,7 @@ type CatalogService interface {
 
 	CreateProduct(request dto.CreateProductRequest) (*dto.ProductResponse, error)
 	GetProducts(query dto.ProductQueryParams) (*dto.ProductListResponse, error)
+	GetAdminProducts(query dto.ProductQueryParams) (*dto.ProductListResponse, error)
 	GetProductByID(id uint) (*dto.ProductResponse, error)
 	UpdateProduct(id uint, request dto.UpdateProductRequest) (*dto.ProductResponse, error)
 	DeleteProduct(id uint) error
@@ -190,6 +191,14 @@ func (s *catalogService) CreateProduct(request dto.CreateProductRequest) (*dto.P
 }
 
 func (s *catalogService) GetProducts(query dto.ProductQueryParams) (*dto.ProductListResponse, error) {
+	return s.getProducts(query, string(models.ProductStatusActive))
+}
+
+func (s *catalogService) GetAdminProducts(query dto.ProductQueryParams) (*dto.ProductListResponse, error) {
+	return s.getProducts(query, "")
+}
+
+func (s *catalogService) getProducts(query dto.ProductQueryParams, status string) (*dto.ProductListResponse, error) {
 	page := normalizePage(query.Page)
 	limit := normalizeLimit(query.Limit)
 	sort := normalizeSort(query.Sort)
@@ -206,7 +215,7 @@ func (s *catalogService) GetProducts(query dto.ProductQueryParams) (*dto.Product
 		BrandID:       query.BrandID,
 		MinPriceCents: query.MinPriceCents,
 		MaxPriceCents: query.MaxPriceCents,
-		Status:        string(models.ProductStatusActive),
+		Status:        status,
 		Sort:          sort,
 		Page:          page,
 		Limit:         limit,

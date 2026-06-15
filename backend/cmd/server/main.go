@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/gin-contrib/cors"
+
 	"github.com/gin-gonic/gin"
 	_ "github.com/rvn14/toys-ecommerce/backend/docs"
 	"github.com/rvn14/toys-ecommerce/backend/internal/config"
@@ -49,6 +51,27 @@ func main() {
 	tokenBlacklist.StartCleanup(ctx, 10*time.Minute)
 
 	router := gin.Default()
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{cfg.FrontendOrigin},
+		AllowMethods: []string{
+			"GET",
+			"POST",
+			"PUT",
+			"PATCH",
+			"DELETE",
+			"OPTIONS",
+		},
+		AllowHeaders: []string{
+			"Origin",
+			"Content-Type",
+			"Authorization",
+		},
+		ExposeHeaders: []string{
+			"Content-Length",
+		},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}))
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.RegisterRoutes(router, db, cfg, tokenBlacklist)

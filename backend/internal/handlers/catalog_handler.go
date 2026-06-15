@@ -182,6 +182,14 @@ func (h *CatalogHandler) CreateProduct(c *gin.Context) {
 }
 
 func (h *CatalogHandler) GetProducts(c *gin.Context) {
+	h.getProducts(c, false)
+}
+
+func (h *CatalogHandler) GetAdminProducts(c *gin.Context) {
+	h.getProducts(c, true)
+}
+
+func (h *CatalogHandler) getProducts(c *gin.Context, includeInactive bool) {
 	var query dto.ProductQueryParams
 
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -189,7 +197,13 @@ func (h *CatalogHandler) GetProducts(c *gin.Context) {
 		return
 	}
 
-	response, err := h.catalogService.GetProducts(query)
+	var response *dto.ProductListResponse
+	var err error
+	if includeInactive {
+		response, err = h.catalogService.GetAdminProducts(query)
+	} else {
+		response, err = h.catalogService.GetProducts(query)
+	}
 	if err != nil {
 		if errors.Is(err, services.ErrInvalidSortOption) {
 			badRequest(c, "Invalid sort option", gin.H{

@@ -15,6 +15,7 @@ type AppConfig struct {
 	DatabaseURL               string
 	JWTSecret                 string
 	AccessTokenExpiresMinutes int
+	FrontendOrigin            string
 }
 
 func LoadConfig() AppConfig {
@@ -28,6 +29,7 @@ func LoadConfig() AppConfig {
 		DatabaseURL:               getRequiredEnv("DATABASE_URL"),
 		JWTSecret:                 getRequiredEnv("JWT_SECRET"),
 		AccessTokenExpiresMinutes: getEnvAsInt("ACCESS_TOKEN_EXPIRES_MINUTES", 60),
+		FrontendOrigin:            getRequiredEnv("FRONTEND_ORIGIN"),
 	}
 }
 
